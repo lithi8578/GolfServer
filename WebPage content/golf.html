@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>滑鼠拖曳撞球遊戲</title>
+  <!--<link href="style.css" rel="stylesheet" type="text/css"/>-->
+  <style>
+    canvas {
+      background: #3487db;
+      display: block;
+      margin: 0 auto;
+    }
+    #istrig{
+      margin-left: 20px;
+      height: 40px;
+      width: auto;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>GOLF</h1>    
+  <h1 id="content">Loadinginginginging...</h1>
+  <label>Force:</label>
+  <input id="force" type="number">
+  <span>_____</span>
+  <label>Angle:</label>
+  <input id="angle" type="number">
+  <button id="istrig" type="button">SHOT!</button>
+  <canvas id="game" width="1200" height="500"></canvas>
+  <script src="script.js"></script>
+</body>
+</html>

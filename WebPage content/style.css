@@ -1,0 +1,11 @@
+canvas {
+      background: #3487db;
+      display: block;
+      margin: 0 auto;
+    }
+    #istrig{
+      margin-left: 20px;
+      height: 40px;
+      width: auto;
+      border-radius: 10px;
+    }
