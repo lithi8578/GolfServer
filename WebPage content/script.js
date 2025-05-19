@@ -19,6 +19,9 @@
       { x: 800, y: 100, w: 20, h: 100, dir: 1 },
       { x: 500, y: 300, w: 20, h: 100, dir: -1 },
     ];
+    let totalpoint=0
+    let angle = 0;
+    let angleFromArduino = 0;
     let displayDx = 0;   
     let displayDy = 0;   
     let displaySpeed = 0;
@@ -63,6 +66,12 @@
         displaySpeed = Math.sqrt(dx*dx + dy*dy).toFixed(2);
         displayAngle = Math.atan2(dy, dx) * (180 / Math.PI);
         displayAngle = displayAngle.toFixed(1); 
+
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const dxCenter = e.offsetX - centerX;
+        const dyCenter = e.offsetY - centerY;
+        angle = Math.atan2(dyCenter, dxCenter);  // 滑鼠控制角度
       }
     });
 
@@ -79,6 +88,36 @@
       }
     });
 
+function drawDegreeIndicator(x, y, r, degree, color = "cyan") {
+  // 把度數轉成弧度，並轉換成Canvas的座標系（0度在右，逆時針增加）
+  const rad = (degree) * Math.PI / 180;
+
+  // 呼叫原本的畫指針函式
+  drawAngleIndicator(x, y, r, rad, color);
+}
+
+function drawAngleIndicator(x, y, r, angle, color = "red") {
+  // 外圓
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.strokeStyle = "black";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // 指針
+  const lineLength = r - 5;
+  const endX = x + Math.cos(angle) * lineLength;
+  const endY = y + Math.sin(angle) * lineLength;
+
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(endX, endY);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 3;
+  ctx.stroke();
+}
+
+
     function drawBall() {
       ctx.beginPath();
       ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
@@ -92,6 +131,43 @@
       ctx.fillStyle = "yellow"; 
       ctx.fill();
     }
+    
+   function resetHole() {
+      const margin = 10;
+      const holeRadius = hole.radius;
+      const maxAttempts = 100;
+
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        const newX = Math.floor(Math.random() * (canvas.width / 2 - 2 * holeRadius - margin)) + canvas.width / 2 + holeRadius + margin;
+        const newY = Math.floor(Math.random() * (canvas.height - 2 * holeRadius - 2 * margin)) + holeRadius + margin;
+
+        let isSafe = true;
+        for (let ob of obstacles) {
+          const obLeft = ob.x - margin;
+          const obRight = ob.x + ob.w + margin;
+          const obTop = ob.y - margin;
+          const obBottom = ob.y + ob.h + margin;
+
+          if (
+            newX + holeRadius > obLeft &&
+            newX - holeRadius < obRight &&
+            newY + holeRadius > obTop &&
+            newY - holeRadius < obBottom
+          ) {
+            isSafe = false;
+            break;
+          }
+        }
+
+        if (isSafe) {
+          hole.x = newX;
+          hole.y = newY;
+          return;
+        }
+      }
+      console.warn("找不到安全的洞位置！");
+    }
+
 
     function drawObstacles() {
       obstacles.forEach(ob => {
@@ -148,8 +224,10 @@
         const dist = Math.hypot(ball.x - hole.x, ball.y - hole.y);
         if (dist <= ball.radius + hole.radius) {
           alert("SCORE");
+          totalpoint+=1
           sign.style.backgroundColor='#28a745';
           resetBall();
+          resetHole();
         }
 
         if (Math.abs(ball.dx) < 0.1 && Math.abs(ball.dy) < 0.1) {
@@ -166,9 +244,25 @@
       ball.dy = 0;
       isShooting = false;
     }
-    function drawforceangle(){
+    function drawAngleIndicator(x, y, r, angle,color = "red") {
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.strokeStyle = "black";
+        ctx.lineWidth = 2;
+        ctx.stroke();
 
-    }
+        const lineLength = r - 5;
+        const endX = x + Math.cos(angle) * lineLength;
+        const endY = y + Math.sin(angle) * lineLength;
+
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(endX, endY);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 3;
+        ctx.stroke();
+      }
+    
     async function fetchData() {
         try{
             const response= await fetch('GET_status');
@@ -176,6 +270,7 @@
             var content=`Force : ${data.force}\n Angle : ${data.angle} \n Trig : ${data.trig}`;
             iptForce.value=data.force;
             iptAngle.value=data.angle;
+            angleFromArduino = iptAngle
             online=true;
             cnctState.style.backgroundColor='#28a745';
             if(data.trig=='1'&&!isShooting ){
@@ -205,8 +300,13 @@
     ctx.fillStyle = "white";
     ctx.fillText("FORCE: " + ((displaySpeed)/10).toFixed(2), 50, 50);
     ctx.fillText("ANGLE: " + displayAngle + "°", 50, 80);
+    ctx.fillText("TOTALSCORES:"+(totalpoint),50,110)
+      //drawAngleIndicator(canvas.width - 60, 60, 30, angleFromArduino, "red");
+     // drawAngleIndicator(canvas.width - 60, 60, 30, angle, "yellow");
+     drawDegreeIndicator(canvas.width - 60, 60, 30, Number(iptAngle.value), "cyan");
     update();
       requestAnimationFrame(loop);
     }
+    
     setInterval(fetchData,100);
     loop();
