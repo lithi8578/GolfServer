@@ -269,8 +269,8 @@ function drawAngleIndicator(x, y, r, angle, color = "red") {
             data=await response.json();
             var content=`Force : ${data.force}\n Angle : ${data.angle} \n Trig : ${data.trig}`;
             iptForce.value=data.force;
-            iptAngle.value=data.angle;
-            angleFromArduino = iptAngle
+            iptAngle.value=angle=data.angle;
+            drawDegreeIndicator(canvas.width - 60, 60, 30, Number(angle), "cyan");
             online=true;
             cnctState.style.backgroundColor='#28a745';
             if(data.trig=='1'&&!isShooting ){
