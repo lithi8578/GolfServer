@@ -12,43 +12,48 @@
     let hole = {
       x: 1050,
       y: 250,
-      radius: 15
+      radius: 25,
+      rds_decreaser:0.8, //min->10
+      limitSpeed: 10,  //最高進洞容許
+      MinSpeed:3,    //至此不再降低
+      spd_decreaser:0.9,
     };
-
+    let map = {
+      0:{color:'blue',fric:0.988,scene:'ice'},
+      1:{color:'brown',fric:0.96,scene:'wood'},
+      2:{color : 'green',fric:0.92,scene:'grass'},
+      3:{color:'gray',fric:0.88,scene:'concrete'},
+    };
+    
     const obstacles = [
-      { x: 800, y: 100, w: 20, h: 100, dir: 1 },
-      { x: 500, y: 300, w: 20, h: 100, dir: -1 },
+      { x: 800, y: 100, w: 10, h: 100, dir: 1 },
+      { x: 500, y: 300, w: 10, h: 100, dir: -1 },
     ];
-    let totalpoint=0
-    let angle = 0;
-    let angleFromArduino = 0;
-    let displayDx = 0;   
-    let displayDy = 0;   
-    let displaySpeed = 0;
-    let displayAngle = 0;
-    const friction = 0.98;
-    let isShooting = false;
-    let mouseStart = null;
-    let mouseCurrent = null;
-    let isDragging = false;
-    let online=false;
+    let totalpoint=0,angle=0,force=0
+    let friction = 0.988;
+    let displaySpeed,displayAngle=0;
+    let isShooting,isDragging,online = false;
+    let mouseStart,mouseCurrent = null;
     var shotBtn= document.getElementById('istrig');
     var iptForce=document.getElementById('force');
     var iptAngle=document.getElementById('angle');
     var sign=document.getElementById('sign');
     var cnctState=document.getElementById('cnct_state');
+    var timer=document.getElementById('timer');
+    var scnlabel=document.getElementById('scene');
     var theta=0;
     shotBtn.addEventListener('click',()=>{
+      angle=iptAngle.value;
       if(isShooting==false){
-        theta=(iptAngle.value/180)*Math.PI;
-        ball.dx=iptForce.value*Math.cos(theta);
-        ball.dy=iptForce.value*Math.sin(theta);
+        theta=(angle/180)*Math.PI;
+        ball.dx=force*Math.cos(theta);
+        ball.dy=force*Math.sin(theta);
         sign.style.backgroundColor='gray';
         isShooting=true;
       }
     });
-    iptForce.addEventListener('change',()=>{sign.style.backgroundColor='yellow';});
-    iptAngle.addEventListener('change',()=>{sign.style.backgroundColor='yellow';});
+    iptForce.addEventListener('change',()=>{sign.style.backgroundColor='yellow'; force=iptForce.value;});
+    iptAngle.addEventListener('change',()=>{sign.style.backgroundColor='yellow'; angle=iptAngle.valu;});
     canvas.addEventListener("mousedown", e => {
       if (!isShooting) {
         isDragging = true;
@@ -167,7 +172,11 @@ function drawAngleIndicator(x, y, r, angle, color = "red") {
       }
       console.warn("找不到安全的洞位置！");
     }
-
+    function setMap(index){
+      canvas.style.backgroundColor=map[index].color;
+      friction=map[index].fric;
+      scnlabel.innerHTML=map[index].scene;
+    }
 
     function drawObstacles() {
       obstacles.forEach(ob => {
@@ -207,7 +216,6 @@ function drawAngleIndicator(x, y, r, angle, color = "red") {
         
         ball.x += ball.dx;
         ball.y += ball.dy;
-
         ball.dx *= friction;
         ball.dy *= friction;
 
@@ -222,9 +230,17 @@ function drawAngleIndicator(x, y, r, angle, color = "red") {
         });
 
         const dist = Math.hypot(ball.x - hole.x, ball.y - hole.y);
-        if (dist <= ball.radius + hole.radius) {
+        if ((dist <= ball.radius + hole.radius)&&(Math.sqrt(ball.dx*ball.dx+ball.dy+ball.dy)<hole.limitSpeed)) {
           alert("SCORE");
+          try{
+            setMap(Math.floor(Math.random()*4));
+          }catch(e){
+            console.error(e);
+          }
+          
           totalpoint+=1
+          hole.limitSpeed=(hole.limitSpeed*hole.spd_decreaser<hole.MinSpeed)? hole.MinSpeed:hole.limitSpeed*hole.spd_decreaser;
+          hole.radius=(hole.radius<=5)? 5:hole.radius*hole.rds_decreaser; 
           sign.style.backgroundColor='#28a745';
           resetBall();
           resetHole();
@@ -267,16 +283,15 @@ function drawAngleIndicator(x, y, r, angle, color = "red") {
         try{
             const response= await fetch('GET_status');
             data=await response.json();
-            var content=`Force : ${data.force}\n Angle : ${data.angle} \n Trig : ${data.trig}`;
-            iptForce.value=data.force;
+            iptForce.value=force=data.force;
             iptAngle.value=angle=data.angle;
             drawDegreeIndicator(canvas.width - 60, 60, 30, Number(angle), "cyan");
             online=true;
             cnctState.style.backgroundColor='#28a745';
             if(data.trig=='1'&&!isShooting ){
                 theta=(iptAngle.value/180)*Math.PI;
-                ball.dx=iptForce.value*Math.cos(theta);
-                ball.dy=iptForce.value*Math.sin(theta);
+                ball.dx=force*Math.cos(theta);
+                ball.dy=force*Math.sin(theta);
                 shotBtn.style.backgroundColor='orange';
                 sign.style.backgroundColor='gray';
                 isShooting=true;
@@ -298,9 +313,9 @@ function drawAngleIndicator(x, y, r, angle, color = "red") {
       drawAimLine();  
     ctx.font = "20px Arial";
     ctx.fillStyle = "white";
-    ctx.fillText("FORCE: " + ((displaySpeed)/10).toFixed(2), 50, 50);
-    ctx.fillText("ANGLE: " + displayAngle + "°", 50, 80);
-    ctx.fillText("TOTALSCORES:"+(totalpoint),50,110)
+    ctx.fillText("SPEED : " + (displaySpeed/10).toFixed(2), 50, 50);
+    ctx.fillText("LIMIT< " + hole.limitSpeed.toFixed(2) , 50, 80);
+    ctx.fillText("SCORES :"+(totalpoint),50,110)
       //drawAngleIndicator(canvas.width - 60, 60, 30, angleFromArduino, "red");
      // drawAngleIndicator(canvas.width - 60, 60, 30, angle, "yellow");
      drawDegreeIndicator(canvas.width - 60, 60, 30, Number(iptAngle.value), "cyan");

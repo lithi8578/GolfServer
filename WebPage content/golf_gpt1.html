@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>GOLF</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      background: #eef2f7;
+      margin: 0;
+    }
+
+    h1,
+    h2 {
+      margin: 10px;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 10px;
+
+    }
+
+    label {
+      font-weight: bold;
+    }
+
+    input[type="number"] {
+      width: 60px;
+      padding: 4px;
+      border-radius: 5px;
+      border: 1px solid #aaa;
+      text-align: center;
+    }
+
+    button {
+      padding: 6px 14px;
+      border: none;
+      border-radius: 8px;
+      background: #28a745;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #218838;
+    }
+
+    #sign {
+      height: 50px;
+      width: 50px;
+      border-radius: 30px;
+      margin-left: 20px;
+      background: #28a745;
+    }
+
+    canvas {
+      display: block;
+      margin: 20px auto;
+      background: #2980b9;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div style="display: flex; justify-content: center; align-items:center;gap: 10px;">
+  <h1>GOLF 撞球遊戲</h1>
+  <button id="cnct_state" style="background-color: red; padding: 7px 7px;"></button>
+  </div>
+  <h2 id="content">輸入角度與力道再按「SHOT!」</h2>
+  <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 30px;">
+    <div class="controls">
+      <div>
+        <label for="force">力道</label><br>
+        <input id="force" type="number" min="0" max="100" value="0">
+      </div>
+      <div>
+        <label for="angle">角度</label><br>
+        <input id="angle" type="number" min="0" max="360" value="45">
+      </div>
+      <div>
+        <label for="istrig"></label><br>
+        <button id="istrig" type="button">SHOT!</button>
+      </div>
+      <div style="align-self: end;">
+        <button id="sign" typy="button"></button>
+      </div>
+    </div>
+    <div>
+      <h1 id="timer">:00</h1>
+    </div>
+    <h1 id="scene"></h1>
+  </div>
+  <canvas id="game" width="1200" height="500"></canvas>
+
+  <script src="script.js"></script>
+</body>
+
+</html>
